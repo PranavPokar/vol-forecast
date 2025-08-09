@@ -57,14 +57,26 @@ with st.sidebar:
 
 # Run Forecast
 if st.sidebar.button("Run Forecast"):
-    # 1. Load data
+
+    poly_key = st.secrets["POLYGON_API_KEY"]
+    fred_key = st.secrets["FRED_API_KEY"]
+
+    # sanity-check existence
+    if not poly_key:
+        st.error("Missing POLYGON_API_KEY in secrets")
+        st.stop()
+    if not fred_key:
+        st.error("Missing FRED_API_KEY in secrets")
+        st.stop()
+
+    # Load data
     price_df = load_price_data(ticker, start_date.isoformat(), end_date.isoformat())
     vix = load_vix(start_date.isoformat(), end_date.isoformat())
     df = merge_price_and_vix(price_df, vix)
 
-    cpi_ser = fetch_fred_series("CPIAUCSL", start_date.isoformat(), end_date.isoformat())
-    unemp_ser= fetch_fred_series("UNRATE", start_date.isoformat(), end_date.isoformat())
-    fedf_ser = fetch_fred_series("FEDFUNDS", start_date.isoformat(), end_date.isoformat())
+    cpi_ser = fetch_fred_series("CPIAUCSL", start_date.isoformat(), end_date.isoformat(), fred_key)
+    unemp_ser= fetch_fred_series("UNRATE", start_date.isoformat(), end_date.isoformat(), fred_key)
+    fedf_ser = fetch_fred_series("FEDFUNDS", start_date.isoformat(), end_date.isoformat(), fred_key)
 
     price_series = price_df["Adj Close"]
     rsi_series   = compute_rsi(price_series, window=14)
@@ -75,11 +87,6 @@ if st.sidebar.button("Run Forecast"):
     "MACD": macd_df["macd"],
     "MACD_signal": macd_df["signal"]
     }
-
-    poly_key = os.getenv("POLYGON_API_KEY")
-    if not poly_key:
-        st.error("Missing POLYGON_API_KEY")
-        st.stop()
 
     raw_news = fetch_polygon_news(
         ticker,
@@ -93,7 +100,7 @@ if st.sidebar.button("Run Forecast"):
         st.warning("No Polygon news found for that period; proceeding without sentiment")
         news_sent = None
 
-    # 2. Feature engineering WITHOUT sentiment
+    # Feature engineering WITHOUT sentiment
     feats = assemble_features(df, vix, news_sentiment=news_sent, technicals=technicals, macros={
             "CPI": cpi_ser,
             "Unemp": unemp_ser,
@@ -105,12 +112,12 @@ if st.sidebar.button("Run Forecast"):
     scaler = StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
 
-    # 3) Dates for plotting
+    # Dates for plotting
     last_date    = feats.index[-1]
     future_dates = [last_date + BDay(i) for i in range(1, horizon+1)]
     hist_vol     = feats["HistVol"]
 
-    # 4) Forecast
+    # Forecast
     if model_choice == "GARCH":
         res    = fit_garch(df["Returns"].dropna().values)
         fcasts = res.forecast(horizon=horizon, reindex=False).variance.iloc[-1]
@@ -206,7 +213,7 @@ if st.sidebar.button("Run Forecast"):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    # 6) Forecast-only
+    # Forecast-only
     st.subheader(f"Forecast-only ({horizon}-day Vol)")
     fig_f = go.Figure()
     fig_f.add_trace(go.Scatter(
@@ -219,7 +226,7 @@ if st.sidebar.button("Run Forecast"):
     )
     st.plotly_chart(fig_f, use_container_width=True)
 
-    # 7) Expected move
+    # Expected move
     current_price = price_df["Adj Close"].iloc[-1]
     exp_pct  = forecast_series.iloc[-1] * np.sqrt(horizon / 252)
     exp_doll = exp_pct * current_price
