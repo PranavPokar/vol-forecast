@@ -181,6 +181,7 @@ if st.sidebar.button("Run Forecast"):
 
     # Load IV and Signal
     forecast_series = pd.Series(fvol, index=future_dates, name="Forecast Vol")
+    pivot_date = forecast_series.index[0]
     iv_today = load_implied_vol(ticker, last_date.isoformat(), horizon)
     signal = forecast_series - iv_today
 
@@ -197,13 +198,20 @@ if st.sidebar.button("Run Forecast"):
         line=dict(color="red", dash="dash")
     ))
     # “Today” marker
-    fig.add_vline(x=last_date, line=dict(color="gray", dash="dot"))
-    fig.add_annotation(x=last_date, y=1, yref="paper",
-                       text="Today", showarrow=False,
-                       yanchor="bottom", xanchor="left")
+    fig.add_shape(
+        type="line",
+        x0=pivot_date, x1=pivot_date,
+        y0=0, y1=1, xref="x", yref="paper",
+        line=dict(color="gray", dash="dot"),
+    )
+    fig.add_annotation(
+        x=pivot_date, y=1, xref="x", yref="paper",
+        text="Today", showarrow=False,
+        yanchor="bottom", xanchor="left"
+    )
     
     # Zoom to history_days + forecast
-    start_plot = last_date - pd.Timedelta(days=history_days)
+    start_plot = pivot_date - pd.Timedelta(days=history_days)
     fig.update_xaxes(range=[start_plot, forecast_series.index[-1]])
     fig.update_layout(
         title=f"{ticker}: Vol History & {horizon}-Day Forecast",
@@ -245,7 +253,7 @@ if st.sidebar.button("Run Forecast"):
         # smooth sentiment with a 7-day MA
         df_drive["Sent_7d"] = df_drive["NewsSent"].rolling(7, min_periods=1).mean()
 
-        today_dt = last_date.to_pydatetime()
+        today_dt = pd.Timestamp(pivot_date).to_pydatetime()
 
         # 4) build figure
         fig_drive = make_subplots(specs=[[{"secondary_y": True}]])
