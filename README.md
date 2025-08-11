@@ -173,6 +173,8 @@ Use the left panel to shape the forecast and the charts. Below is what each inpu
 *   All models output **annualized volatility (σ)** for each day in your chosen horizon.
     
 *   The app converts that into an **Expected Move** over the horizon to make it tradable:
+  ![Alt text](https://i.sstatic.net/4cGRx.png)
+In this case, the IV is instead our forecasted vol.
     
 
 ### Guardrails
@@ -337,8 +339,29 @@ FRED_API_KEY    = "your_fred_key"
 📷Screenshots
 -------------
 
-*   History vs Forecast
-    
-*   Expected Move
-    
-*   News Sentiment vs Vol (+ forward caption)
+### 1. Sidebar Controls
+![Sidebar Controls](images/sidebar-controls.png)
+
+---
+
+### 2. Historical & Forecasted Volatility
+Visual comparison of past volatility and the model's predictions.
+![Historical & Forecast](images/hist-and-forecast.png)
+
+---
+
+### 3. Forecast vs Expected Move
+Forecast only graph with expected move numbers.
+![Forecast vs Expected Move](images/forecast-and-expected-move.png)
+
+---
+
+### 4. News Sentiment vs Historical Volatility
+Track how sentiment data correlates with volatility trends.
+![News Sentiment vs Hist Vol](images/new-sent-vs-histVol.png)
+
+---
+
+### 5. Empirical Outcomes
+Helps to understand what to make of volatility from news sentiment
+![Empirical Outcome](images/empirical-outcome.png)
