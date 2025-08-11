@@ -1,4 +1,4 @@
-Volatility Forecasting Dashboard
+[Volatility Forecasting Dashboard](https://vol-forecasting.streamlit.app/) <-- Click this to view the App
 ================================
 
 A practical tool for investors to **visualize historical volatility**, **forecast future volatility** over custom horizons, and **understand drivers** like **news sentiment** and **technical momentum**—all in one place.
